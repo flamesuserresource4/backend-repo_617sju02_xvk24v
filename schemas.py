@@ -1,48 +1,83 @@
 """
-Database Schemas
+Database Schemas for International Institute of Languages
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
+Each Pydantic model represents a MongoDB collection. The collection name is the
+lowercased class name.
 
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Use these schemas across the app for validation and to power the database viewer.
 """
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List
+from datetime import date
 
-from pydantic import BaseModel, Field
-from typing import Optional
 
-# Example schemas (replace with your own):
-
-class User(BaseModel):
+class Course(BaseModel):
     """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
+    Courses offered by the institute (IELTS, PTE, Foreign Languages, etc.)
+    Collection: "course"
     """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    slug: str = Field(..., description="URL-friendly unique identifier (e.g., ielts-coaching)")
+    title: str = Field(..., description="Course title")
+    category: str = Field(..., description="Category like 'Exam Prep' or 'Foreign Language'")
+    short_description: str = Field(..., description="Brief summary for cards")
+    description: Optional[str] = Field(None, description="Detailed overview")
+    image_url: Optional[str] = Field(None, description="Hero/cover image")
+    icon: Optional[str] = Field(None, description="Lucide icon name for UI")
+    duration_weeks: Optional[int] = Field(None, ge=1, description="Approximate duration in weeks")
+    price: Optional[float] = Field(None, ge=0, description="Indicative price")
+    highlights: Optional[List[str]] = Field(default_factory=list, description="Key benefits bullets")
+    syllabus: Optional[List[str]] = Field(default_factory=list, description="Syllabus outline bullets")
 
-class Product(BaseModel):
+
+class Testimonial(BaseModel):
     """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
+    Student testimonials with outcomes
+    Collection: "testimonial"
     """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+    name: str
+    course_slug: Optional[str] = Field(None, description="Reference to related course")
+    message: str
+    score_or_result: Optional[str] = Field(None, description="e.g., IELTS 8.0 Overall")
+    avatar_url: Optional[str] = None
 
-# Add your own schemas here:
-# --------------------------------------------------
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class BlogPost(BaseModel):
+    """
+    Blog / Resources articles
+    Collection: "blogpost"
+    """
+    slug: str
+    title: str
+    excerpt: str
+    content: Optional[str] = None
+    cover_image_url: Optional[str] = None
+    tags: Optional[List[str]] = Field(default_factory=list)
+    published_on: Optional[date] = None
+
+
+class Enquiry(BaseModel):
+    """
+    Contact / Enquiry submissions
+    Collection: "enquiry"
+    """
+    name: str
+    email: EmailStr
+    phone: Optional[str] = None
+    course_interest: Optional[str] = None
+    message: Optional[str] = None
+
+
+# Optional: Basic institute info for About/SEO (can be extended later)
+class InstituteInfo(BaseModel):
+    """
+    Core institute information for About page and SEO
+    Collection: "instituteinfo"
+    """
+    name: str = Field("International Institute of Languages")
+    tagline: Optional[str] = None
+    mission: Optional[str] = None
+    vision: Optional[str] = None
+    address: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    social_links: Optional[dict] = Field(default_factory=dict)
